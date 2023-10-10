@@ -42,7 +42,9 @@ chai.use(chaiHttp);
 
 describe("CI Testing for GET/healthz", () => {
   it("Successfully check the Db connection", async () => {
+
     // let dbstatus = true;
+
     server()
     try {
       const response = await chai.request(app).get("/healthz");
