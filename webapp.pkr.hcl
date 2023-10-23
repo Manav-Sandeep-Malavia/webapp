@@ -105,7 +105,7 @@ build {
       "sudo ls -al",
       "unzip webapp.zip -d webapp_main",
       "sudo mv /home/admin/webapp_main/user.csv /opt",
-      "sudo mv /home/admin/webapp_main/systemd_packer.service /lib/systemd/system"
+      "sudo mv /home/admin/webapp_main/systemd_packer.service /lib/systemd/system",
       "sudo ls -al",
       "cd webapp_main",
       "npm install",
