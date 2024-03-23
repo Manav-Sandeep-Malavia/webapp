@@ -14,7 +14,7 @@
 
 ## Overview
 
-This project is a RESTful API for managing assignment tasks, enabling users to create, read, update, and delete assignment entries.
+This project is a RESTful API for managing assignment tasks, enabling users to create, read, update, and delete assignment entries
 
 ## Requirements
 
