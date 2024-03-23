@@ -1,4 +1,5 @@
 name: Healthz CI
+
 on:
   pull_request:
   push:
@@ -8,6 +9,7 @@ on:
 jobs:
   Run-Integration-test-for-healthz:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -15,12 +17,12 @@ jobs:
       - name: Set .env file
         run: |
           touch .env
-          echo "DB_PASSWORD=${{secrets.DB_PASSWORD}}" >> .env
-          echo "DB_NAME=${{secrets.DB_NAME}}" >> .env
-          echo "DB_USER=${{secrets.DB_USER}}" >> .env
-          echo "DB_PORT=${{secrets.DB_PORT}}" >> .env
-          echo "DB_HOST=${{secrets.DB_HOST}}" >> .env
-          echo "DIALECT=${{secrets.DIALECT}}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DIALECT=${{ secrets.DIALECT }}" >> .env
           echo DEFAULTUSERPATH='' >> .env
 
       - name: Set up MariaDB
@@ -28,12 +30,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install mariadb-server -y
           sudo systemctl start mariadb
-          sudo mysql -e "GRANT ALL ON *.* TO '${{secrets.DB_USER}}'@'localhost' IDENTIFIED BY '${{secrets.DB_PASSWORD}}';"
+          sudo mysql -e "GRANT ALL ON *.* TO '${{ secrets.DB_USER }}'@'localhost' IDENTIFIED BY '${{ secrets.DB_PASSWORD }}';"
 
-      - name: Use Node.js 18v
+      - name: Use Node.js 18.x
         uses: actions/setup-node@v3
         with:
-          node-version: 18.x
+          node-version: '18.x'
           cache: 'npm'
 
       - name: Install Node.js Dependencies
@@ -41,4 +43,3 @@ jobs:
 
       - name: Run Integration Tests
         run: npm test
-
