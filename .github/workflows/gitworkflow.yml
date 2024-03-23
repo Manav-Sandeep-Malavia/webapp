@@ -31,7 +31,7 @@ jobs:
           sudo mysql -e "CREATE USER IF NOT EXISTS '${{secrets.DB_USER}}'@'localhost' IDENTIFIED BY '${{secrets.DB_PASSWORD}}'; GRANT ALL ON *.* TO '${{secrets.DB_USER}}'@'localhost';"
 
       - name: Use Node.js 18v
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v2
         with:
           node-version: 18.x
           cache: 'npm'
