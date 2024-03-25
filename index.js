@@ -10,6 +10,9 @@ const assignment_controllers = require("./controllers/assignment_controllers.js"
 const axios = require('axios');
 const PORT = 3000;
 
+const app = express();
+app.use(express.json());
+
 // Custom error formatter
 const errorFormatter = format((info) => {
   if (info instanceof Error) {
@@ -36,12 +39,6 @@ const errorFormatter = format((info) => {
   }
   return info;
 });
-let instanceId = null;
-axios.get('http://169.254.169.254/latest/meta-data/instance-id')
-    .then(response => {
-        instanceId = response.data;
-    })
-    .catch(error => console.error('Error fetching instance ID:', error));
 
 // Winston Logger Configuration
 const logger = winston.createLogger({
@@ -63,100 +60,111 @@ const logger = winston.createLogger({
     new winston.transports.Console()
   ],
 });
-
-const app = express();
-app.use(express.json());
-
-// Routes and Middleware
-app.post('/demo/assignments', basicAuthMiddleware.basicAuthMiddleware, assignment_controllers.createAssignment);
-app.get('/demo/assignments', basicAuthMiddleware.basicAuthMiddleware, assignment_controllers.getAllAssignments);
-app.get('/demo/assignments/:id', basicAuthMiddleware.basicAuthMiddleware, assignment_controllers.getAssignmentById);
-app.put('/demo/assignments/:id', basicAuthMiddleware.basicAuthMiddleware, assignment_controllers.updateAssignment);
-app.delete('/demo/assignments/:id', basicAuthMiddleware.basicAuthMiddleware, assignment_controllers.deleteAssignment);
-app.post('/demo/assignments/:id/submission', basicAuthMiddleware.basicAuthMiddleware, assignment_controllers.submitAssignment);
-app.all('/demo/assignments/:id/submission', (req, res) => {
-  res.status(405).send('Method Not Allowed');
-});
-app.patch('/demo/assignments', (req, res) => {
-    res.status(405).send();
-    logger.error({
-      errorcode: "405",
-      message: "Method Not Allowed",
-      method: req.method,
-      userurl: req.originalUrl,
-      location: __filename, 
-      filename: path.basename(__filename),
-    
+let instanceId = null;
+axios.get('http://169.254.169.254/latest/meta-data/instance-id')
+    .then(response => {
+        instanceId = response.data;
+        // Start the server after fetching the instance ID
+        startServer();
+    })
+    .catch(error => {
+        console.error('Error fetching instance ID:', error);
+        // Start the server even if instance ID fetch fails
+        startServer();
     });
-});
+
+function startServer() {
+
+  // Routes and Middleware
+  app.post('/demo/assignments', basicAuthMiddleware.basicAuthMiddleware, assignment_controllers.createAssignment);
+  app.get('/demo/assignments', basicAuthMiddleware.basicAuthMiddleware, assignment_controllers.getAllAssignments);
+  app.get('/demo/assignments/:id', basicAuthMiddleware.basicAuthMiddleware, assignment_controllers.getAssignmentById);
+  app.put('/demo/assignments/:id', basicAuthMiddleware.basicAuthMiddleware, assignment_controllers.updateAssignment);
+  app.delete('/demo/assignments/:id', basicAuthMiddleware.basicAuthMiddleware, assignment_controllers.deleteAssignment);
+  app.post('/demo/assignments/:id/submission', basicAuthMiddleware.basicAuthMiddleware, assignment_controllers.submitAssignment);
+  app.all('/demo/assignments/:id/submission', (req, res) => {
+    res.status(405).send('Method Not Allowed');
+  });
+  app.patch('/demo/assignments', (req, res) => {
+      res.status(405).send();
+      logger.error({
+        errorcode: "405",
+        message: "Method Not Allowed",
+        method: req.method,
+        userurl: req.originalUrl,
+        location: __filename, 
+        filename: path.basename(__filename),
+      
+      });
+  });
 
 
-app.all('/healthz', async (req, res) => {
-  assignment_controllers.stats.increment(`healthz.api.calls`)
-    res.setHeader('Cache-Control', 'no-cache');
-    if (req.method !== "GET") {
-        res.status(405).send();
-        logger.error({
-          errorcode: "405",
-          message: "Method Not Allowed",
-          method: req.method,
-          userurl: req.originalUrl,
-          location: __filename, 
-          filename: path.basename(__filename),
-        
-        });
-        return;
-    }
+  app.all('/healthz', async (req, res) => {
+    assignment_controllers.stats.increment(`healthz.api.calls`)
+      res.setHeader('Cache-Control', 'no-cache');
+      if (req.method !== "GET") {
+          res.status(405).send();
+          logger.error({
+            errorcode: "405",
+            message: "Method Not Allowed",
+            method: req.method,
+            userurl: req.originalUrl,
+            location: __filename, 
+            filename: path.basename(__filename),
+          
+          });
+          return;
+      }
 
-    const contentLength = parseInt(req.headers['content-length']) || 0;
-    if (Object.keys(req.query).length > 0 || contentLength > 0) {
-        res.status(400).send();
-        logger.error({
-          errorcode: "400",
-          message: "Bad Request",
-          method: req.method,
-          userurl: req.originalUrl,
-          location: __filename, 
-          filename: path.basename(__filename),
-        });
-        return;
-    }
+      const contentLength = parseInt(req.headers['content-length']) || 0;
+      if (Object.keys(req.query).length > 0 || contentLength > 0) {
+          res.status(400).send();
+          logger.error({
+            errorcode: "400",
+            message: "Bad Request",
+            method: req.method,
+            userurl: req.originalUrl,
+            location: __filename, 
+            filename: path.basename(__filename),
+          });
+          return;
+      }
 
-    try {
-        const isConnected = await db.conn();
-        if (!isConnected) {
-            throw new Error('Failed to connect to the database');
-        }
-        res.status(200).send();
-        logger.info('Healthz checkpoint connected succesfully')
-    } catch (error) {
-        res.status(503).send();
-        logger.error({
-          errorcode: "503",
-          message: error.message,
-          method: req.method,
-          userurl: req.originalUrl,
-          location: __filename, 
-          filename: path.basename(__filename),
+      try {
+          const isConnected = await db.conn();
+          if (!isConnected) {
+              throw new Error('Failed to connect to the database');
+          }
+          res.status(200).send();
+          logger.info('Healthz checkpoint connected succesfully')
+      } catch (error) {
+          res.status(503).send();
+          logger.error({
+            errorcode: "503",
+            message: error.message,
+            method: req.method,
+            userurl: req.originalUrl,
+            location: __filename, 
+            filename: path.basename(__filename),
 
-        });
-    }
-});
+          });
+      }
+  });
 
-app.all('/*', (req, res) => {
-    res.status(404).send();
-    logger.error({
-      errorcode: "404",
-      message: "Link Url Not Found",
-      method: req.method,
-      userurl: req.originalUrl,
-      location: __filename, 
-      filename: path.basename(__filename),
-    });
-});
+  app.all('/*', (req, res) => {
+      res.status(404).send();
+      logger.error({
+        errorcode: "404",
+        message: "Link Url Not Found",
+        method: req.method,
+        userurl: req.originalUrl,
+        location: __filename, 
+        filename: path.basename(__filename),
+      });
+  });
 
-app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`);
-});
-
+  app.listen(PORT, () => {
+    logger.info(`Server running on port ${PORT}`);
+  });
+}
 module.exports = { app };
