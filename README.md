@@ -1,4 +1,4 @@
-# WebApp - CSYE 6225
+# WebApp - CSYE 6225.
 
 ## Contents
 
