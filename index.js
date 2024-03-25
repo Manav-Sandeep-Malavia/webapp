@@ -36,12 +36,12 @@ const errorFormatter = format((info) => {
   }
   return info;
 });
-let instanceId = null;
-axios.get('http://169.254.169.254/latest/meta-data/instance-id')
-    .then(response => {
-        instanceId = response.data;
-    })
-    .catch(error => console.error('Error fetching instance ID:', error));
+// let instanceId = null;
+// axios.get('http://169.254.169.254/latest/meta-data/instance-id')
+//     .then(response => {
+//         instanceId = response.data;
+//     })
+//     .catch(error => console.error('Error fetching instance ID:', error));
 
 // Winston Logger Configuration
 const logger = winston.createLogger({
